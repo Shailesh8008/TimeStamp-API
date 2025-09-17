@@ -23,14 +23,21 @@ app.get("/api/hello", function (req, res) {
   res.json({ greeting: "hello API" });
 });
 
-app.route("/api/:time").get((req, res, next) => {
+app.route("/api/:time?").get((req, res, next) => {
   let params = req.params;
-  if (!params.time.includes("-")) {
-    params.time = Number(params.time);
-    const time = new Date(params.time);
-    res.json({ unix: params.time, utc: time.toUTCString() });
+  let time;
+  if (!params.time) {
+    time = new Date();
+  } else if (/^\d+$/.test(params.time)) {
+    const unix = Number(params.time);
+    time = unix < 10000000000 ? new Date(unix * 1000) : new Date(unix);
   } else {
-    const time = new Date(params.time);
+    time = new Date(params.time);
+  }
+
+  if (time.toString() === "Invalid Date") {
+    res.json({ error: "Invalid Date" });
+  } else {
     res.json({ unix: time.getTime(), utc: time.toUTCString() });
   }
   next();
